@@ -1,6 +1,7 @@
 'use client';
 
 import { updateClaimStatus } from '@/app/actions/billing';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,13 +19,43 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { BillingRecord, PaymentStatus } from '@/types/billing';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface ClaimsTableProps {
   billingData: BillingRecord[];
 }
+
+const STATUS_CONFIG = {
+  Pending: {
+    color: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+    icon: AlertCircle,
+    message: 'This claim is pending review',
+  },
+  Approved: {
+    color: 'bg-green-100 text-green-800 hover:bg-green-200',
+    icon: CheckCircle,
+    message: 'This claim has been approved and cannot be modified',
+  },
+  Denied: {
+    color: 'bg-red-100 text-red-800 hover:bg-red-200',
+    icon: XCircle,
+    message: 'This claim has been denied and cannot be modified',
+  },
+};
 
 export function ClaimsTable({ billingData }: ClaimsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,6 +115,56 @@ export function ClaimsTable({ billingData }: ClaimsTableProps) {
     }
 
     return <ArrowDown className="inline ml-1 h-4 w-4 text-gray-300" />;
+  };
+
+  // Helper to render claim status with appropriate styling
+  const renderStatus = (status: PaymentStatus) => {
+    const { color, icon: Icon, message } = STATUS_CONFIG[status];
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className={color}>
+              <Icon className="h-3.5 w-3.5 mr-1" />
+              {status}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{message}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  const renderActionButtons = (record: BillingRecord) => {
+    const { payment_status, patient_id } = record;
+
+    if (payment_status === 'Approved' || payment_status === 'Denied') {
+      return null;
+    }
+
+    return (
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleStatusUpdate(patient_id, 'Approved')}
+        >
+          <CheckCircle className="h-3.5 w-3.5 mr-1" />
+          Approve
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleStatusUpdate(patient_id, 'Denied')}
+        >
+          <XCircle className="h-3.5 w-3.5 mr-1" />
+          Deny
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -158,12 +239,21 @@ export function ClaimsTable({ billingData }: ClaimsTableProps) {
           </TableHeader>
           <TableBody>
             {filteredData.map((record) => (
-              <TableRow key={record.patient_id}>
+              <TableRow
+                key={record.patient_id}
+                className={
+                  record.payment_status === 'Approved'
+                    ? 'bg-green-50'
+                    : record.payment_status === 'Denied'
+                    ? 'bg-red-50'
+                    : ''
+                }
+              >
                 <TableCell>{record.patient_name}</TableCell>
                 <TableCell>{record.billing_code}</TableCell>
                 <TableCell>${record.amount.toLocaleString()}</TableCell>
                 <TableCell>{record.insurance_provider}</TableCell>
-                <TableCell>{record.payment_status}</TableCell>
+                <TableCell>{renderStatus(record.payment_status)}</TableCell>
                 <TableCell>
                   {new Date(record.claim_date).toLocaleDateString('en-GB', {
                     day: '2-digit',
@@ -171,30 +261,7 @@ export function ClaimsTable({ billingData }: ClaimsTableProps) {
                     year: 'numeric',
                   })}
                 </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleStatusUpdate(record.patient_id, 'Approved')
-                      }
-                      disabled={record.payment_status === 'Approved'}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleStatusUpdate(record.patient_id, 'Denied')
-                      }
-                      disabled={record.payment_status === 'Denied'}
-                    >
-                      Deny
-                    </Button>
-                  </div>
-                </TableCell>
+                <TableCell>{renderActionButtons(record)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

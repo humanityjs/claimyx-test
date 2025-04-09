@@ -15,9 +15,9 @@ interface DashboardSummaryProps {
 }
 
 const STATUS_COLORS = {
-  Pending: '#8884d8',
-  Approved: '#82ca9d',
-  Denied: '#ffc658',
+  Pending: '#3b82f6',
+  Approved: '#22c55e',
+  Denied: '#ef4444',
 };
 
 const chartConfig = {
@@ -51,11 +51,11 @@ export function DashboardSummary({ billingData }: DashboardSummaryProps) {
   }));
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>Dashboard Summary</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 h-full flex flex-col">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <h3 className="text-sm font-medium text-gray-500">
@@ -71,29 +71,37 @@ export function DashboardSummary({ billingData }: DashboardSummaryProps) {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-500">
-            Claim Distribution
-          </h3>
-          <div>
-            <CardContent>
-              <ChartContainer config={chartConfig}>
-                <BarChart accessibilityLayer data={chartData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="status"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Bar dataKey="count" fill="var(--color-desktop)" radius={8} />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
+        <div className="space-y-4 h-full flex-1">
+          <div className="flex flex-col gap-4 h-full">
+            <h3 className="text-sm font-medium text-gray-500">
+              Claim Distribution
+            </h3>
+            <div className="flex-1">
+              <div className="flex h-full items-center justify-center">
+                <CardContent className="flex-1">
+                  <ChartContainer config={chartConfig} className="">
+                    <BarChart accessibilityLayer data={chartData}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="status"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                      />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel />}
+                      />
+                      <Bar
+                        dataKey="count"
+                        fill="var(--color-desktop)"
+                        radius={8}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
